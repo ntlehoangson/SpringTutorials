@@ -18,7 +18,7 @@ public class CounterController {
         ExecutorService executorService = Executors.newFixedThreadPool(10);
 
         for (int i = 0; i < 10; i++) {
-            executorService.submit(() -> counterService.incrementCounter());
+            new Thread(() -> counterService.incrementCounter(), "Thread-" + i).start();
         }
 
         executorService.shutdown();

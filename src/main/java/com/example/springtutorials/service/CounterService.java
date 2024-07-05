@@ -14,23 +14,30 @@ public class CounterService {
     private static final String COUNTER_KEY = "counter";
 
     public void incrementCounter() {
-        Boolean lockAcquired = redisTemplate.opsForValue().setIfAbsent(LOCK_KEY, 1, 5, TimeUnit.SECONDS);
+        Boolean lockAcquired = redisTemplate.opsForValue().setIfAbsent(LOCK_KEY, 1, 10, TimeUnit.SECONDS);
 
         if (Boolean.TRUE.equals(lockAcquired)) {
             try {
-                Integer counter = (Integer) redisTemplate.opsForValue().get(COUNTER_KEY);
+                // Giả lập công việc lâu bằng Thread.sleep
+                System.out.println(Thread.currentThread().getName() + " acquired lock, processing...");
+
+                Thread.sleep(1);
+                Integer counter = Integer.parseInt(redisTemplate.opsForValue().get(COUNTER_KEY).toString());
                 if (counter == null) {
                     counter = 0;
                 }
                 counter++;
                 redisTemplate.opsForValue().set(COUNTER_KEY, counter);
-                System.out.println("Current counter is " + counter);
+                System.out.println(Thread.currentThread().getName() + " current counter is " + counter);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                System.out.println("Thread was interrupted");
             } finally {
                 redisTemplate.delete(LOCK_KEY);
-                System.out.println("Unlock success!");
+                System.out.println(Thread.currentThread().getName() + " unlock success!");
             }
         } else {
-            System.out.println("Failed to acquire lock");
+            System.out.println(Thread.currentThread().getName() + " failed to acquire lock");
         }
     }
 }
